@@ -33,9 +33,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
     private static Map<String, Set<String>> whiteList = Map.of(
             "/", Set.of("GET"),
             "/api/sign-up", Set.of("POST"),
-            "/api/login", Set.of("POST"),
-            "/api/files**", Set.of("GET", "POST"),
-            "/api/folders**", Set.of("GET", "POST"),
+            "/api/sign-in", Set.of("POST"),
             "/api/tokens/refresh", Set.of("GET", "POST"),
             "/css/*", Set.of("GET"),
             "/js/*", Set.of("GET"),
@@ -71,11 +69,12 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
 
         try {
-            if (authorization == null || !authorization.startsWith("Bearer")) {
-                throw new CustomJwtException("NO_BEARER_TOKEN");
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                filterChain.doFilter(request, response);
+                return;
             }
 
-            String token = authorization.substring("Bearer ".length());
+            String token = authorization.substring("Bearer ".length()).trim();
 
             Map<String, Object> claims = JwtUtils.validateToken(token);
             log.info("JWT Claims: {}", claims);

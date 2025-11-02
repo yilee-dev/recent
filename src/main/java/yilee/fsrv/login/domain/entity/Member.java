@@ -20,7 +20,7 @@ public class Member {
 
     private String username;
 
-    @Size(min = 6, max = 13)
+    @Size(min = 4, max = 13)
     @Column(length = 13, nullable = false, unique = true)
     private String nickname;
 

@@ -86,7 +86,7 @@ public class FolderObject {
 
     public boolean isDescendantOf(FolderObject other) {
         for (FolderObject cur = this.parent; cur != null; cur = cur.parent) {
-            if (cur == this) return true;
+            if (cur == other) return true;
         }
         return false;
     }

@@ -17,7 +17,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) throws IOException, ServletException {
         Gson gson = new GsonHttpMessageConverter().getGson();
-        String jsonStr = gson.toJson(Map.of("error", "ERROR_ACCESS_DENIED"));
+        String jsonStr = gson.toJson(Map.of("error", "FORBIDDEN",
+                "message", "Access denied. You do not have sufficient permissions"));
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);

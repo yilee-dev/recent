@@ -22,7 +22,7 @@ public class MemberDto {
     private Long id;
 
     @NotBlank
-    @Length(min = 8, max = 20)
+    @Length(min = 4, max = 20)
     private String username;
 
     @NotBlank
@@ -30,7 +30,7 @@ public class MemberDto {
     private String password;
 
     @NotBlank
-    @Length(min = 6, max = 20)
+    @Length(min = 4, max = 20)
     private String nickname;
 
     @Builder.Default

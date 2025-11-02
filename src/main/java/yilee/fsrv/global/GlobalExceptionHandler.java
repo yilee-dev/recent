@@ -1,12 +1,19 @@
 package yilee.fsrv.global;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
+import org.aspectj.weaver.ast.Not;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import yilee.fsrv.directory.folder.exception.DomainException;
+import yilee.fsrv.directory.folder.exception.FolderAlreadyDeletedException;
+import yilee.fsrv.directory.folder.exception.FolderNotFoundException;
+import yilee.fsrv.directory.folder.exception.NotEnoughPermission;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -37,6 +44,32 @@ public class GlobalExceptionHandler {
         body.put("errors", errors);
 
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(NotEnoughPermission.class)
+    public ResponseEntity<?> notEnoughPermission(NotEnoughPermission exception) {
+        int status = "LOGIN_REQUIRED".equals(exception.getMessage()) ? 401 : 403;
+        return ResponseEntity.status(status)
+                .body(Map.of("errors", "NOT_ENOUGH_PERMISSION",
+                        "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(FolderNotFoundException.class)
+    public ResponseEntity<?> folderNotFoundException(FolderNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("errors", "NOT_FOUND_FOLDER", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(FolderAlreadyDeletedException.class)
+    public ResponseEntity<?> folderAlreadyDeletedException(FolderAlreadyDeletedException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("errors", "FOLDER_DELETED", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<?> domainException(DomainException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("errors", "DOMAIN_ERROR", "message", exception.getMessage()));
     }
 
     public String resolve(FieldError fieldError, Locale locale) {

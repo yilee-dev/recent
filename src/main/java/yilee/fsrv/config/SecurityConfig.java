@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -40,11 +43,16 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/folders/**", "/api/files/**") .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/sign-in", "/api/sign-up") .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/folders", "/api/files", "/api/folders/**", "/api/files/**").permitAll()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()) .permitAll()
                 .anyRequest().authenticated()
-        ).exceptionHandling(configurer -> configurer.accessDeniedHandler(new CustomAccessDeniedHandler()))
-                .addFilterBefore(new JwtCheckFilter(), UsernamePasswordAuthenticationFilter.class)
+        ).exceptionHandling(configurer -> configurer.authenticationEntryPoint((req, res, e) -> {
+                    res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 401
+                    res.getWriter().println("{\"errors\":\"UNAUTHORIZED\"}");
+                }).accessDeniedHandler(new CustomAccessDeniedHandler()))
+                .addFilterBefore(jwtCheckFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(configurer -> configurer.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable);

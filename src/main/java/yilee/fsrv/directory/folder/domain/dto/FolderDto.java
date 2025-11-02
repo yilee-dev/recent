@@ -4,10 +4,17 @@ import lombok.Data;
 import lombok.Getter;
 import yilee.fsrv.directory.folder.domain.enums.FolderScope;
 
+import java.time.LocalDateTime;
+
 public record FolderDto (
         Long id,
-        String name,
+        Long parentId,
         Long ownerId,
-        FolderScope scope
+        String name,
+        FolderScope scope,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        LocalDateTime deletedAt,
+        Boolean isDeleted
 ) {
 }
