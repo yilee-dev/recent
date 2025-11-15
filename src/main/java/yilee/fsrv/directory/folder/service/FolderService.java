@@ -94,7 +94,7 @@ public class FolderService {
             @Override public void afterCommit() { storageService.createFolder(folder); }
         });
 
-        return new CreateFolderResponse(new FolderDto(folder.getId(), parent != null ? parent.getId() : null, folder.getOwnerId(), folder.getName(), folder.getScope(), folder.getCreatedAt(), folder.getUpdatedAt(), folder.getDeletedAt(), folder.isDeleted()));
+        return new CreateFolderResponse(FolderDto.ofNew(folder));
     }
 
     public CursorPageResponse<FolderDto> getFolders(Long folderId, Long viewerId, Long folderCursor, int folderSize) {

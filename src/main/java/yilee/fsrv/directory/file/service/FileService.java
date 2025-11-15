@@ -2,18 +2,23 @@ package yilee.fsrv.directory.file.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import yilee.fsrv.directory.acl.enums.FolderPermission;
 import yilee.fsrv.directory.acl.helper.PermissionChecker;
 import yilee.fsrv.directory.file.domain.dto.FileDto;
+import yilee.fsrv.directory.file.domain.dto.FileSummaryDto;
 import yilee.fsrv.directory.file.domain.dto.UploadFileRequest;
 import yilee.fsrv.directory.file.domain.entity.FileArtifact;
 import yilee.fsrv.directory.file.domain.entity.FileObject;
 import yilee.fsrv.directory.file.domain.enums.FileType;
 import yilee.fsrv.directory.file.repository.FileArtifactRepository;
 import yilee.fsrv.directory.file.repository.FileRepository;
+import yilee.fsrv.directory.folder.domain.dto.CursorResult;
 import yilee.fsrv.directory.folder.domain.entity.FolderObject;
+import yilee.fsrv.directory.folder.domain.enums.FolderScope;
 import yilee.fsrv.directory.folder.exception.*;
 import yilee.fsrv.directory.folder.repository.FolderMetricsRepository;
 import yilee.fsrv.directory.folder.repository.FolderRepository;
@@ -27,6 +32,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -40,6 +49,70 @@ public class FileService {
     private final PermissionChecker permissionChecker;
     private final StorageService storageService;
     private final FileArtifactRepository fileArtifactRepository;
+
+    public FileSummaryDto summarize(Long folderId, Long viewerId) {
+        return fileRepository.summarizeVisibleJPQL(
+                folderId,
+                viewerId,
+                FileType.NORMAL, FileType.INSTALL, FileType.UNINSTALL,
+                Arrays.asList(FolderPermission.READ, FolderPermission.WRITE)
+        );
+    }
+
+    public CursorResult<FileDto> listVisibleByType(Long folderId, Long viewerId,
+                                                   FileType fileType, Long cursorId, int size) {
+        var list = fileRepository.findVisibleByTypeJPQL(
+                folderId,
+                viewerId,
+                fileType,
+                cursorId,
+                Arrays.asList(FolderPermission.READ, FolderPermission.WRITE),
+                PageRequest.of(0, size + 1)
+        );
+
+        boolean hasNext = list.size() > size;
+        if (hasNext) list = list.subList(0, size);
+
+        Long next = list.isEmpty() ? null : list.get(list.size() - 1).getId();
+        List<FileDto> items = list.stream().map(FileDto::from).collect(Collectors.toList());
+        return new CursorResult<>(items, next, hasNext);
+    }
+//
+//    @Transactional(readOnly = true)
+//    public FileSummaryDto summarize(Long folderId, Long viewerId) {
+//        return fileRepository.summarizeVisibleJPQL(
+//                folderId, viewerId,
+//                FileType.NORMAL, FileType.INSTALL, FileType.UNINSTALL,
+//                FolderScope.SHARED,
+//                Arrays.asList(FolderPermission.READ, FolderPermission.WRITE)
+//        );
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public CursorResult<FileDto> listVisibleByType(Long folderId, Long viewerId,
+//                                                   FileType fileType, Long cursorId, int size) {
+//
+//        Collection<FolderPermission> perms =
+//                Arrays.asList(FolderPermission.READ, FolderPermission.WRITE);
+//        PageRequest pageable = PageRequest.of(0, size + 1);
+//
+//        var list = fileRepository.findVisibleByTypeJPQL(
+//                folderId,
+//                viewerId,
+//                fileType,
+//                cursorId,
+//                FolderScope.SHARED,
+//                perms,
+//                pageable
+//        );
+//
+//        boolean hasNext = list.size() > size;
+//        if (hasNext) list = list.subList(0, size);
+//
+//        Long next = list.isEmpty() ? null : list.get(list.size() - 1).getId();
+//        var items = list.stream().map(FileDto::from).collect(Collectors.toList());
+//        return new CursorResult<>(items, next, hasNext);
+//    }
 
     @Transactional
     public FileDto upload(UploadFileRequest request, Long uploaderId) {

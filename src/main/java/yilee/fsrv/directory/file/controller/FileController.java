@@ -10,11 +10,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import yilee.fsrv.directory.acl.helper.PermissionChecker;
 import yilee.fsrv.directory.file.domain.dto.FileDto;
+import yilee.fsrv.directory.file.domain.dto.FileSummaryDto;
 import yilee.fsrv.directory.file.domain.dto.UploadFileRequest;
 import yilee.fsrv.directory.file.domain.entity.FileObject;
 import yilee.fsrv.directory.file.domain.enums.FileType;
 import yilee.fsrv.directory.file.repository.FileRepository;
 import yilee.fsrv.directory.file.service.FileService;
+import yilee.fsrv.directory.file.service.FileSummaryService;
 import yilee.fsrv.directory.folder.domain.dto.CursorPageResponse;
 import yilee.fsrv.directory.folder.domain.dto.CursorResult;
 import yilee.fsrv.directory.folder.exception.DomainException;
@@ -40,18 +42,41 @@ public class FileController {
     private final PermissionChecker permissionChecker;
     private final MemberRepository memberRepository;
 
-    @GetMapping
-    public CursorPageResponse<FileDto> getFiles(
-            @RequestParam Long folderId,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Set<FileType> types,
+    @GetMapping("/summary")
+    public FileSummaryDto summary(
+            @RequestParam(required = false) Long folderId, // 루트면 null
             @AuthenticationPrincipal(errorOnInvalidType = false) MemberDto principal
     ) {
         Long viewerId = principal != null ? principal.getId() : null;
-        CursorResult<FileDto> r = fileRepository.findByFolderVisible(folderId, viewerId, cursor, size, types);
-        return new CursorPageResponse<>(r.items(), r.nextCursor(), r.hasNextCursor(), r.items().size());
+        return fileService.summarize(folderId, viewerId);
     }
+
+
+//    @GetMapping
+//    public CursorPageResponse<FileDto> getFiles(
+//            @RequestParam Long folderId,
+//            @RequestParam(required = false) Long cursor,
+//            @RequestParam(defaultValue = "20") int size,
+//            @RequestParam(required = false) Set<FileType> types,
+//            @AuthenticationPrincipal(errorOnInvalidType = false) MemberDto principal
+//    ) {
+//        Long viewerId = principal != null ? principal.getId() : null;
+//        CursorResult<FileDto> r = fileRepository.findByFolderVisible(folderId, viewerId, cursor, size, types);
+//        return new CursorPageResponse<>(r.items(), r.nextCursor(), r.hasNextCursor(), r.items().size());
+//    }
+    @GetMapping
+    public CursorPageResponse<FileDto> list(
+        @RequestParam(required = false) Long folderId,
+        @RequestParam(required = false) FileType fileType,   // ✅ enum으로
+        @RequestParam(required = false, name = "fileCursor") Long fileCursor,
+        @RequestParam(defaultValue = "20", name = "fileSize") int fileSize,
+        @AuthenticationPrincipal(errorOnInvalidType = false) MemberDto principal
+    ) {
+        Long viewerId = principal != null ? principal.getId() : null;
+        var cr = fileService.listVisibleByType(folderId, viewerId, fileType, fileCursor, fileSize);
+        return new CursorPageResponse<>(cr.items(), cr.nextCursor(), cr.hasNextCursor(), cr.items().size());
+    }
+
 
     @PostMapping
     public FileDto upload(

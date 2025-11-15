@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class JwtCheckFilter extends OncePerRequestFilter {
-    private static Map<String, Set<String>> whiteList = Map.of(
+    private static Map<String, Set<String>> WHITE_LIST = Map.of(
             "/", Set.of("GET"),
             "/api/sign-up", Set.of("POST"),
             "/api/sign-in", Set.of("POST"),
@@ -52,7 +52,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
     }
 
     private boolean isWhiteListed(String uri, String method) {
-        for (Map.Entry<String, Set<String>> entry : whiteList.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : WHITE_LIST.entrySet()) {
             String whitePath = entry.getKey();
             Set<String> allowedMethods = entry.getValue();
 

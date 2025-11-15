@@ -44,7 +44,9 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/sign-in", "/api/sign-up") .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tokens/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/folders", "/api/files", "/api/folders/**", "/api/files/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/files/summary").permitAll()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()) .permitAll()
                 .anyRequest().authenticated()
         ).exceptionHandling(configurer -> configurer.authenticationEntryPoint((req, res, e) -> {
